@@ -344,6 +344,10 @@ textarea {
   flex-wrap: wrap;
 }
 
+.search-box {
+  margin-bottom: 12px;
+}
+
 .status-pill {
   display: inline-flex;
   align-items: center;
@@ -353,6 +357,15 @@ textarea {
   background: #ecfdf5;
   color: #0f766e;
   font-weight: 800;
+}
+
+.clickable-row {
+  cursor: pointer;
+}
+
+.clickable-row:hover,
+.active-row {
+  background: #f8fafc;
 }
 
 .table-panel {

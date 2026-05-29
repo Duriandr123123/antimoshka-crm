@@ -60,6 +60,7 @@ export default function App() {
   const [clientCard, setClientCard] = useState<ClientCard | null>(null);
   const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
   const [editingDealId, setEditingDealId] = useState<number | null>(null);
+  const [clientSearch, setClientSearch] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -106,6 +107,23 @@ export default function App() {
       deals: deals.filter((deal) => deal.status === status),
     }));
   }, [deals, meta.statuses]);
+
+  const dealCountByClient = useMemo(() => {
+    return deals.reduce<Record<number, number>>((acc, deal) => {
+      acc[deal.client_id] = (acc[deal.client_id] || 0) + 1;
+      return acc;
+    }, {});
+  }, [deals]);
+
+  const filteredClients = useMemo(() => {
+    const query = clientSearch.trim().toLowerCase();
+    if (!query) {
+      return clients;
+    }
+    return clients.filter((client) =>
+      [client.name, client.phone, client.address].some((value) => value.toLowerCase().includes(query)),
+    );
+  }, [clients, clientSearch]);
 
   async function handleLogin(event: FormEvent) {
     event.preventDefault();
@@ -407,13 +425,26 @@ export default function App() {
 
             <div className="panel">
               <h3>Клиенты</h3>
-              <div className="client-list">
-                {clients.map((client) => (
-                  <button key={client.id} className={selectedClientId === client.id ? "client-row active" : "client-row"} onClick={() => setSelectedClientId(client.id)}>
-                    <strong>{client.name}</strong>
-                    <span>{client.phone}</span>
-                  </button>
-                ))}
+              <div className="search-box">
+                <input placeholder="Поиск по имени, телефону или адресу" value={clientSearch} onChange={(event) => setClientSearch(event.target.value)} />
+              </div>
+              <div className="table-panel">
+                <table>
+                  <thead>
+                    <tr><th>Имя</th><th>Телефон</th><th>Адрес</th><th>Источник</th><th>Сделок</th></tr>
+                  </thead>
+                  <tbody>
+                    {filteredClients.map((client) => (
+                      <tr key={client.id} className={selectedClientId === client.id ? "clickable-row active-row" : "clickable-row"} onClick={() => setSelectedClientId(client.id)}>
+                        <td>{client.name}</td>
+                        <td>{client.phone}</td>
+                        <td>{client.address}</td>
+                        <td>{client.source}</td>
+                        <td>{dealCountByClient[client.id] || 0}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
               {clientCard && (
                 <article className="client-card">

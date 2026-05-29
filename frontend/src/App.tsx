@@ -20,7 +20,7 @@ const emptyDeal = {
   comment: "",
 };
 
-type Tab = "dashboard" | "kanban" | "clients" | "tasks";
+type Tab = "dashboard" | "deals" | "kanban" | "clients" | "tasks";
 
 async function api<T>(path: string, options?: RequestInit): Promise<T> {
   let response: Response;
@@ -58,6 +58,8 @@ export default function App() {
   const [taskForm, setTaskForm] = useState({ deal_id: 0, manager_id: 0, measurement_date: "", installation_date: "" });
   const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
   const [clientCard, setClientCard] = useState<ClientCard | null>(null);
+  const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
+  const [editingDealId, setEditingDealId] = useState<number | null>(null);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -129,12 +131,45 @@ export default function App() {
     setMessage("Клиент создан");
   }
 
-  async function createDeal(event: FormEvent) {
-    event.preventDefault();
-    await api<Deal>("/deals", { method: "POST", body: JSON.stringify(dealForm) });
+  function resetDealForm() {
+    setEditingDealId(null);
     setDealForm({ ...emptyDeal, client_id: clients[0]?.id || 0 });
+  }
+
+  async function saveDeal(event: FormEvent) {
+    event.preventDefault();
+    const saved = editingDealId
+      ? await api<Deal>(`/deals/${editingDealId}`, { method: "PUT", body: JSON.stringify(dealForm) })
+      : await api<Deal>("/deals", { method: "POST", body: JSON.stringify(dealForm) });
+    setSelectedDeal(saved);
+    resetDealForm();
     await loadData();
-    setMessage("Сделка создана");
+    setMessage(editingDealId ? "Сделка обновлена" : "Сделка создана");
+  }
+
+  function editDeal(deal: Deal) {
+    setSelectedDeal(deal);
+    setEditingDealId(deal.id);
+    setDealForm({
+      client_id: deal.client_id,
+      net_type: deal.net_type,
+      windows_count: deal.windows_count,
+      amount: deal.amount,
+      status: deal.status,
+      comment: deal.comment,
+    });
+  }
+
+  async function deleteDeal(deal: Deal) {
+    if (!window.confirm(`Удалить сделку #${deal.id}?`)) {
+      return;
+    }
+    await api<{ ok: boolean }>(`/deals/${deal.id}`, { method: "DELETE" });
+    if (selectedDeal?.id === deal.id) {
+      setSelectedDeal(null);
+    }
+    await loadData();
+    setMessage("Сделка удалена");
   }
 
   async function createTask(event: FormEvent) {
@@ -208,6 +243,7 @@ export default function App() {
         <nav>
           {[
             ["dashboard", "Дашборд"],
+            ["deals", "Сделки"],
             ["kanban", "Канбан"],
             ["clients", "Клиенты"],
             ["tasks", "Задачи"],
@@ -226,7 +262,7 @@ export default function App() {
       <section className="workspace">
         <header className="topbar">
           <div>
-            <h2>{tab === "dashboard" ? "Дашборд" : tab === "kanban" ? "Канбан" : tab === "clients" ? "Клиенты" : "Задачи"}</h2>
+            <h2>{tab === "dashboard" ? "Дашборд" : tab === "deals" ? "Сделки" : tab === "kanban" ? "Канбан" : tab === "clients" ? "Клиенты" : "Задачи"}</h2>
             <p>{new Date().toLocaleDateString("ru-KZ", { day: "2-digit", month: "long", year: "numeric" })}</p>
           </div>
           <button className="ghost" onClick={() => loadData()}>
@@ -246,6 +282,71 @@ export default function App() {
             <Metric label="Монтажей сегодня" value={dashboard.installations_today} />
             <Metric label="Продажи за месяц" value={money(dashboard.monthly_sales)} />
             <Metric label="Конверсия в продажу" value={`${dashboard.sales_conversion}%`} />
+          </section>
+        )}
+
+        {tab === "deals" && (
+          <section className="two-column wide-left">
+            <div className="panel">
+              <h3>{editingDealId ? `Сделка #${editingDealId}` : "Новая сделка"}</h3>
+              <form className="form compact" onSubmit={saveDeal}>
+                <select value={dealForm.client_id} onChange={(event) => setDealForm({ ...dealForm, client_id: Number(event.target.value) })}>
+                  {clients.map((client) => <option value={client.id} key={client.id}>{client.name}</option>)}
+                </select>
+                <select value={dealForm.net_type} onChange={(event) => setDealForm({ ...dealForm, net_type: event.target.value })}>
+                  {meta.net_types.map((type) => <option key={type}>{type}</option>)}
+                </select>
+                <input type="number" min="1" value={dealForm.windows_count} onChange={(event) => setDealForm({ ...dealForm, windows_count: Number(event.target.value) })} />
+                <input type="number" min="0" value={dealForm.amount} onChange={(event) => setDealForm({ ...dealForm, amount: Number(event.target.value) })} />
+                <select value={dealForm.status} onChange={(event) => setDealForm({ ...dealForm, status: event.target.value })}>
+                  {meta.statuses.map((status) => <option key={status}>{status}</option>)}
+                </select>
+                <textarea placeholder="Комментарий" value={dealForm.comment} onChange={(event) => setDealForm({ ...dealForm, comment: event.target.value })} />
+                <div className="button-row">
+                  <button>{editingDealId ? "Сохранить" : "Создать сделку"}</button>
+                  {editingDealId && <button type="button" className="secondary" onClick={resetDealForm}>Отмена</button>}
+                </div>
+              </form>
+              {selectedDeal && (
+                <article className="client-card">
+                  <h3>Просмотр сделки #{selectedDeal.id}</h3>
+                  <p><strong>{selectedDeal.client.name}</strong></p>
+                  <p>{selectedDeal.client.phone}</p>
+                  <p>{selectedDeal.net_type}, {selectedDeal.windows_count} ок.</p>
+                  <p>{money(selectedDeal.amount)} · {selectedDeal.status}</p>
+                  <p>{selectedDeal.comment || "Без комментария"}</p>
+                </article>
+              )}
+            </div>
+            <div className="panel table-panel">
+              <h3>Сделки</h3>
+              <table>
+                <thead>
+                  <tr><th>ID</th><th>Клиент</th><th>Телефон</th><th>Тип сетки</th><th>Окна</th><th>Сумма</th><th>Статус</th><th>Дата</th><th></th></tr>
+                </thead>
+                <tbody>
+                  {deals.map((deal) => (
+                    <tr key={deal.id}>
+                      <td>#{deal.id}</td>
+                      <td>{deal.client.name}</td>
+                      <td>{deal.client.phone}</td>
+                      <td>{deal.net_type}</td>
+                      <td>{deal.windows_count}</td>
+                      <td>{money(deal.amount)}</td>
+                      <td><span className="status-pill">{deal.status}</span></td>
+                      <td>{new Date(deal.created_at).toLocaleDateString("ru-KZ")}</td>
+                      <td>
+                        <div className="table-actions">
+                          <button type="button" className="secondary" onClick={() => setSelectedDeal(deal)}>Открыть</button>
+                          <button type="button" className="secondary" onClick={() => editDeal(deal)}>Изменить</button>
+                          <button type="button" className="danger" onClick={() => deleteDeal(deal)}>Удалить</button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </section>
         )}
 
@@ -289,7 +390,7 @@ export default function App() {
                 <button>Создать клиента</button>
               </form>
               <h3>Новая сделка</h3>
-              <form className="form compact" onSubmit={createDeal}>
+              <form className="form compact" onSubmit={saveDeal}>
                 <select value={dealForm.client_id} onChange={(event) => setDealForm({ ...dealForm, client_id: Number(event.target.value) })}>
                   {clients.map((client) => <option value={client.id} key={client.id}>{client.name}</option>)}
                 </select>

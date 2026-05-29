@@ -34,6 +34,16 @@ button:hover {
   filter: brightness(0.96);
 }
 
+button.secondary {
+  background: #f8fafc;
+  color: #172026;
+  border: 1px solid #cbd5e1;
+}
+
+button.danger {
+  background: #b91c1c;
+}
+
 input,
 select,
 textarea {
@@ -277,6 +287,10 @@ textarea {
   gap: 16px;
 }
 
+.wide-left {
+  grid-template-columns: minmax(320px, 460px) 1fr;
+}
+
 .panel {
   min-width: 0;
   padding: 16px;
@@ -322,6 +336,25 @@ textarea {
   margin-top: 8px;
 }
 
+.button-row,
+.table-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: #ecfdf5;
+  color: #0f766e;
+  font-weight: 800;
+}
+
 .table-panel {
   overflow-x: auto;
 }
@@ -364,7 +397,8 @@ th {
   }
 
   .dashboard-grid,
-  .two-column {
+  .two-column,
+  .wide-left {
     grid-template-columns: 1fr;
   }
 }

@@ -127,9 +127,16 @@ class ClientCard(BaseModel):
 
 
 class DashboardRead(BaseModel):
+    total_clients: int
+    total_deals: int
     total_leads: int
     today_leads: int
     active_deals: int
+    completed_deals: int
     completed_orders: int
+    measurements_today: int
+    installations_today: int
+    monthly_sales: float
     sales_amount: float
+    sales_conversion: float
     conversion: float

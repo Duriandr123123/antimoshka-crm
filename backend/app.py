@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime, time
 
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -230,17 +230,36 @@ def list_status_history(db: Session = Depends(get_db)):
 
 @app.get("/api/dashboard", response_model=schemas.DashboardRead)
 def dashboard(db: Session = Depends(get_db)):
-    total_leads = db.query(models.Deal).count()
-    today_leads = db.query(models.Deal).filter(func.date(models.Deal.created_at) == date.today().isoformat()).count()
-    active_deals = db.query(models.Deal).filter(~models.Deal.status.in_(["Завершено", "Отказ"])).count()
-    completed_orders = db.query(models.Deal).filter(models.Deal.status == "Завершено").count()
-    sales_amount = db.query(func.coalesce(func.sum(models.Deal.amount), 0)).filter(models.Deal.status == "Завершено").scalar()
-    conversion = round((completed_orders / total_leads) * 100, 1) if total_leads else 0
+    today = date.today()
+    month_start = datetime.combine(today.replace(day=1), time.min)
+    completed_status = "Завершено"
+    refused_status = "Отказ"
+
+    total_clients = db.query(models.Client).count()
+    total_deals = db.query(models.Deal).count()
+    today_leads = db.query(models.Deal).filter(func.date(models.Deal.created_at) == today.isoformat()).count()
+    active_deals = db.query(models.Deal).filter(~models.Deal.status.in_([completed_status, refused_status])).count()
+    completed_deals = db.query(models.Deal).filter(models.Deal.status == completed_status).count()
+    measurements_today = db.query(models.Task).filter(models.Task.measurement_date == today).count()
+    installations_today = db.query(models.Task).filter(models.Task.installation_date == today).count()
+    monthly_sales = (
+        db.query(func.coalesce(func.sum(models.Deal.amount), 0))
+        .filter(models.Deal.status == completed_status, models.Deal.created_at >= month_start)
+        .scalar()
+    )
+    sales_conversion = round((completed_deals / total_deals) * 100, 1) if total_deals else 0
     return {
-        "total_leads": total_leads,
+        "total_clients": total_clients,
+        "total_deals": total_deals,
+        "total_leads": total_deals,
         "today_leads": today_leads,
         "active_deals": active_deals,
-        "completed_orders": completed_orders,
-        "sales_amount": sales_amount,
-        "conversion": conversion,
+        "completed_deals": completed_deals,
+        "completed_orders": completed_deals,
+        "measurements_today": measurements_today,
+        "installations_today": installations_today,
+        "monthly_sales": monthly_sales,
+        "sales_amount": monthly_sales,
+        "sales_conversion": sales_conversion,
+        "conversion": sales_conversion,
     }

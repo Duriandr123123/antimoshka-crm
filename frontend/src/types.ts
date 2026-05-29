@@ -46,11 +46,18 @@ export type StatusHistory = {
 };
 
 export type Dashboard = {
+  total_clients: number;
+  total_deals: number;
   total_leads: number;
   today_leads: number;
   active_deals: number;
+  completed_deals: number;
   completed_orders: number;
+  measurements_today: number;
+  installations_today: number;
+  monthly_sales: number;
   sales_amount: number;
+  sales_conversion: number;
   conversion: number;
 };
 

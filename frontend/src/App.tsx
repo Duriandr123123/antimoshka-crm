@@ -238,12 +238,14 @@ export default function App() {
 
         {tab === "dashboard" && dashboard && (
           <section className="dashboard-grid">
-            <Metric label="Всего заявок" value={dashboard.total_leads} />
-            <Metric label="Заявок сегодня" value={dashboard.today_leads} />
+            <Metric label="Всего клиентов" value={dashboard.total_clients} />
+            <Metric label="Всего сделок" value={dashboard.total_deals} />
             <Metric label="Активных сделок" value={dashboard.active_deals} />
-            <Metric label="Завершено" value={dashboard.completed_orders} />
-            <Metric label="Сумма продаж" value={money(dashboard.sales_amount)} />
-            <Metric label="Конверсия" value={`${dashboard.conversion}%`} />
+            <Metric label="Завершенных сделок" value={dashboard.completed_deals} />
+            <Metric label="Замеров сегодня" value={dashboard.measurements_today} />
+            <Metric label="Монтажей сегодня" value={dashboard.installations_today} />
+            <Metric label="Продажи за месяц" value={money(dashboard.monthly_sales)} />
+            <Metric label="Конверсия в продажу" value={`${dashboard.sales_conversion}%`} />
           </section>
         )}
 

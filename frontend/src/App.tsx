@@ -20,7 +20,7 @@ const emptyDeal = {
   comment: "",
 };
 
-type Tab = "dashboard" | "deals" | "kanban" | "clients" | "tasks";
+type Tab = "dashboard" | "deals" | "kanban" | "clients" | "clientCard" | "tasks";
 
 async function api<T>(path: string, options?: RequestInit): Promise<T> {
   let response: Response;
@@ -190,6 +190,11 @@ export default function App() {
     setMessage("Сделка удалена");
   }
 
+  function openClientCard(clientId: number) {
+    setSelectedClientId(clientId);
+    setTab("clientCard");
+  }
+
   async function createTask(event: FormEvent) {
     event.preventDefault();
     await api<Task>("/tasks", {
@@ -280,7 +285,7 @@ export default function App() {
       <section className="workspace">
         <header className="topbar">
           <div>
-            <h2>{tab === "dashboard" ? "Дашборд" : tab === "deals" ? "Сделки" : tab === "kanban" ? "Канбан" : tab === "clients" ? "Клиенты" : "Задачи"}</h2>
+            <h2>{tab === "dashboard" ? "Дашборд" : tab === "deals" ? "Сделки" : tab === "kanban" ? "Канбан" : tab === "clients" ? "Клиенты" : tab === "clientCard" ? "Карточка клиента" : "Задачи"}</h2>
             <p>{new Date().toLocaleDateString("ru-KZ", { day: "2-digit", month: "long", year: "numeric" })}</p>
           </div>
           <button className="ghost" onClick={() => loadData()}>
@@ -435,7 +440,7 @@ export default function App() {
                   </thead>
                   <tbody>
                     {filteredClients.map((client) => (
-                      <tr key={client.id} className={selectedClientId === client.id ? "clickable-row active-row" : "clickable-row"} onClick={() => setSelectedClientId(client.id)}>
+                      <tr key={client.id} className={selectedClientId === client.id ? "clickable-row active-row" : "clickable-row"} onClick={() => openClientCard(client.id)}>
                         <td>{client.name}</td>
                         <td>{client.phone}</td>
                         <td>{client.address}</td>
@@ -463,6 +468,53 @@ export default function App() {
                 </article>
               )}
             </div>
+          </section>
+        )}
+
+        {tab === "clientCard" && (
+          <section className="panel client-page">
+            <button className="secondary" onClick={() => setTab("clients")}>Назад к клиентам</button>
+            {clientCard ? (
+              <>
+                <div className="details-grid">
+                  <div><span>Имя</span><strong>{clientCard.client.name}</strong></div>
+                  <div><span>Телефон</span><strong>{clientCard.client.phone}</strong></div>
+                  <div><span>Адрес</span><strong>{clientCard.client.address}</strong></div>
+                  <div><span>Источник</span><strong>{clientCard.client.source}</strong></div>
+                </div>
+                <p className="comment-line">{clientCard.client.comment || "Комментарий не указан"}</p>
+                <h3>Сделки клиента</h3>
+                <div className="table-panel">
+                  <table>
+                    <thead><tr><th>ID</th><th>Тип сетки</th><th>Окна</th><th>Сумма</th><th>Статус</th></tr></thead>
+                    <tbody>
+                      {clientCard.deals.map((deal) => (
+                        <tr key={deal.id}><td>#{deal.id}</td><td>{deal.net_type}</td><td>{deal.windows_count}</td><td>{money(deal.amount)}</td><td>{deal.status}</td></tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <h3>История действий</h3>
+                <div className="table-panel">
+                  <table>
+                    <thead><tr><th>Дата</th><th>Сделка</th><th>Было</th><th>Стало</th><th>Комментарий</th></tr></thead>
+                    <tbody>
+                      {clientCard.history.map((item) => (
+                        <tr key={item.id}>
+                          <td>{new Date(item.changed_at).toLocaleDateString("ru-KZ")}</td>
+                          <td>#{item.deal_id}</td>
+                          <td>{item.old_status || "Старт"}</td>
+                          <td>{item.new_status}</td>
+                          <td>{item.comment}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            ) : (
+              <p>Выберите клиента из списка.</p>
+            )}
           </section>
         )}
 

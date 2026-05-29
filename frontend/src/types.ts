@@ -34,6 +34,7 @@ export type Task = {
   measurement_date: string | null;
   installation_date: string | null;
   manager: User;
+  deal: Deal;
 };
 
 export type StatusHistory = {

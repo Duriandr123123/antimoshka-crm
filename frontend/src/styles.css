@@ -44,6 +44,10 @@ button.danger {
   background: #b91c1c;
 }
 
+button.active-filter {
+  background: #172026;
+}
+
 input,
 select,
 textarea {
@@ -366,11 +370,18 @@ textarea {
 }
 
 .button-row,
-.table-actions {
+.table-actions,
+.toolbar,
+.filter-row {
   display: flex;
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+.toolbar {
+  justify-content: space-between;
+  margin-bottom: 12px;
 }
 
 .search-box {

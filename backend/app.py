@@ -196,7 +196,12 @@ def delete_deal(deal_id: int, db: Session = Depends(get_db)):
 
 @app.get("/api/tasks", response_model=list[schemas.TaskRead])
 def list_tasks(db: Session = Depends(get_db)):
-    return db.query(models.Task).options(joinedload(models.Task.manager)).order_by(models.Task.id.desc()).all()
+    return (
+        db.query(models.Task)
+        .options(joinedload(models.Task.manager), joinedload(models.Task.deal).joinedload(models.Deal.client))
+        .order_by(models.Task.id.desc())
+        .all()
+    )
 
 
 @app.post("/api/tasks", response_model=schemas.TaskRead)
@@ -209,7 +214,12 @@ def create_task(payload: schemas.TaskCreate, db: Session = Depends(get_db)):
     db.add(task)
     db.commit()
     db.refresh(task)
-    return db.query(models.Task).options(joinedload(models.Task.manager)).filter(models.Task.id == task.id).one()
+    return (
+        db.query(models.Task)
+        .options(joinedload(models.Task.manager), joinedload(models.Task.deal).joinedload(models.Deal.client))
+        .filter(models.Task.id == task.id)
+        .one()
+    )
 
 
 @app.put("/api/tasks/{task_id}", response_model=schemas.TaskRead)
@@ -220,7 +230,12 @@ def update_task(task_id: int, payload: schemas.TaskUpdate, db: Session = Depends
     for key, value in payload.model_dump().items():
         setattr(task, key, value)
     db.commit()
-    return db.query(models.Task).options(joinedload(models.Task.manager)).filter(models.Task.id == task.id).one()
+    return (
+        db.query(models.Task)
+        .options(joinedload(models.Task.manager), joinedload(models.Task.deal).joinedload(models.Deal.client))
+        .filter(models.Task.id == task.id)
+        .one()
+    )
 
 
 @app.get("/api/status-history", response_model=list[schemas.StatusHistoryRead])

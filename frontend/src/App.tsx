@@ -21,6 +21,7 @@ const emptyDeal = {
 };
 
 type Tab = "dashboard" | "deals" | "kanban" | "clients" | "clientCard" | "tasks";
+type TaskFilter = "all" | "today" | "tomorrow" | "overdue";
 
 async function api<T>(path: string, options?: RequestInit): Promise<T> {
   let response: Response;
@@ -61,6 +62,7 @@ export default function App() {
   const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
   const [editingDealId, setEditingDealId] = useState<number | null>(null);
   const [clientSearch, setClientSearch] = useState("");
+  const [taskFilter, setTaskFilter] = useState<TaskFilter>("all");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -124,6 +126,26 @@ export default function App() {
       [client.name, client.phone, client.address].some((value) => value.toLowerCase().includes(query)),
     );
   }, [clients, clientSearch]);
+
+  const filteredTasks = useMemo(() => {
+    const today = new Date().toISOString().slice(0, 10);
+    const tomorrowDate = new Date();
+    tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+    const tomorrow = tomorrowDate.toISOString().slice(0, 10);
+    return tasks.filter((task) => {
+      const dates = [task.measurement_date, task.installation_date].filter(Boolean) as string[];
+      if (taskFilter === "today") {
+        return dates.includes(today);
+      }
+      if (taskFilter === "tomorrow") {
+        return dates.includes(tomorrow);
+      }
+      if (taskFilter === "overdue") {
+        return dates.some((value) => value < today) && !["Завершено", "Отказ"].includes(task.deal.status);
+      }
+      return true;
+    });
+  }, [tasks, taskFilter]);
 
   async function handleLogin(event: FormEvent) {
     event.preventDefault();
@@ -535,23 +557,37 @@ export default function App() {
               </form>
             </div>
             <div className="panel table-panel">
-              <h3>План работ</h3>
+              <div className="toolbar">
+                <h3>План работ</h3>
+                <div className="filter-row">
+                  {[
+                    ["all", "Все"],
+                    ["today", "Сегодня"],
+                    ["tomorrow", "Завтра"],
+                    ["overdue", "Просроченные"],
+                  ].map(([key, label]) => (
+                    <button key={key} className={taskFilter === key ? "active-filter" : "secondary"} onClick={() => setTaskFilter(key as TaskFilter)}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
               <table>
                 <thead>
-                  <tr><th>Сделка</th><th>Замер</th><th>Монтаж</th><th>Менеджер</th></tr>
+                  <tr><th>Сделка</th><th>Клиент</th><th>Телефон</th><th>Замер</th><th>Монтаж</th><th>Менеджер</th><th>Статус</th></tr>
                 </thead>
                 <tbody>
-                  {tasks.map((task) => {
-                    const deal = deals.find((item) => item.id === task.deal_id);
-                    return (
-                      <tr key={task.id}>
-                        <td>{deal?.client.name || `#${task.deal_id}`}</td>
-                        <td>{task.measurement_date || "—"}</td>
-                        <td>{task.installation_date || "—"}</td>
-                        <td>{task.manager.full_name}</td>
-                      </tr>
-                    );
-                  })}
+                  {filteredTasks.map((task) => (
+                    <tr key={task.id}>
+                      <td>#{task.deal.id}</td>
+                      <td>{task.deal.client.name}</td>
+                      <td>{task.deal.client.phone}</td>
+                      <td>{task.measurement_date || "—"}</td>
+                      <td>{task.installation_date || "—"}</td>
+                      <td>{task.manager.full_name}</td>
+                      <td>{task.deal.status}</td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>

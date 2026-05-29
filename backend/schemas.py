@@ -106,6 +106,7 @@ class TaskRead(TaskBase):
 
     id: int
     manager: UserRead
+    deal: DealRead
 
 
 class StatusHistoryRead(BaseModel):

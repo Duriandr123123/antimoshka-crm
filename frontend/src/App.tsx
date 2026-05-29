@@ -23,10 +23,15 @@ const emptyDeal = {
 type Tab = "dashboard" | "kanban" | "clients" | "tasks";
 
 async function api<T>(path: string, options?: RequestInit): Promise<T> {
-  const response = await fetch(`${API_URL}${path}`, {
-    headers: { "Content-Type": "application/json" },
-    ...options,
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${API_URL}${path}`, {
+      headers: { "Content-Type": "application/json" },
+      ...options,
+    });
+  } catch {
+    throw new Error("Backend недоступен. Запустите FastAPI на http://127.0.0.1:8000");
+  }
   if (!response.ok) {
     const data = await response.json().catch(() => ({}));
     throw new Error(data.detail || "Ошибка API");
@@ -102,6 +107,7 @@ export default function App() {
 
   async function handleLogin(event: FormEvent) {
     event.preventDefault();
+    setMessage("");
     setLoading(true);
     try {
       const loggedIn = await api<User>("/login", { method: "POST", body: JSON.stringify(login) });

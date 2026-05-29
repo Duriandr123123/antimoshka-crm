@@ -114,9 +114,13 @@ textarea {
   margin: 0;
 }
 
-.notice,
 .toast {
   color: #0f766e;
+  font-weight: 700;
+}
+
+.notice {
+  color: #b91c1c;
   font-weight: 700;
 }
 

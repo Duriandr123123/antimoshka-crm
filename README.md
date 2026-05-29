@@ -63,6 +63,18 @@ npm run dev
 - admin / admin123
 - manager / manager123
 
+## Если вход не работает
+
+Если после нажатия "Войти" ничего не меняется или появляется ошибка backend, проверьте, что backend запущен отдельно:
+
+```bash
+cd backend
+.venv\Scripts\python.exe seed.py
+.venv\Scripts\python.exe -m uvicorn app:app --reload --host 127.0.0.1 --port 8000
+```
+
+Frontend сам по себе не авторизует пользователя. Он отправляет запросы в API на `http://127.0.0.1:8000`.
+
 ## Команды разработки
 
 Backend:

@@ -109,6 +109,10 @@ If any check fails, do not finish the task. Fix the issue and repeat the checks.
 - Do not use Docker.
 - Do not introduce microservices.
 - Do not overcomplicate the architecture.
+- Work on only one module at a time.
+- Do not analyze the entire project unless the user explicitly asks for a full review.
+- Do not run full-application checks unless the user explicitly asks for them.
+- After each change, stop and show the result before continuing.
 - Prefer a working MVP over abstractions.
 - Keep backend modules small and explicit.
 - Keep frontend state simple and readable.

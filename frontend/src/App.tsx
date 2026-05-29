@@ -361,7 +361,8 @@ export default function App() {
                 {column.deals.map((deal) => (
                   <article className="deal-card" key={deal.id} draggable onDragStart={(event) => onDragStart(event, deal.id)}>
                     <strong>{deal.client.name}</strong>
-                    <span>{deal.net_type} · {deal.windows_count} ок.</span>
+                    <span>{deal.client.phone}</span>
+                    <span>{deal.windows_count} ок.</span>
                     <b>{money(deal.amount)}</b>
                     <select value={deal.status} onChange={(event) => changeStatus(deal.id, event.target.value)}>
                       {meta.statuses.map((status) => (
